@@ -58,9 +58,10 @@ g = unFoo
   . foo
       bar
       baz
-      3 $ do
-  act
-  ret
+      3
+  $ do
+    act
+    ret
 
 main =
   do stuff
@@ -97,3 +98,12 @@ main = do
   let e = f
       g = h
   return c
+
+readInClause = do
+  do
+    lookAhead g_Do
+    parseNote ErrorC 1063 "You need a line feed or semicolon before the 'do'."
+    <|> do
+      optional g_Semi
+      void allspacing
+  return things

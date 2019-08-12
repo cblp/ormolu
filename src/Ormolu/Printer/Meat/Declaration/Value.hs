@@ -467,19 +467,22 @@ p_hsExpr = \case
       txt "@"
       located (hswc_body a) p_hsType
   OpApp NoExt x op y -> do
-    ub <- vlayout (return useBraces) (return dontUseBraces)
-    ub $ located x p_hsExpr
-    -- NOTE If the end of the first argument and the beginning of the second
-    -- argument are on the same line, and the second argument has a hanging
-    -- form, use hanging placement.
+    -- NOTE If the beginnings of the first argument and the second argument
+    -- are on the same line, and the second argument has a hangingform, use
+    -- hanging placement.
     let placement =
           if isOneLineSpan
-               (mkSrcSpan (srcSpanEnd (getLoc x)) (srcSpanStart (getLoc y)))
+               (mkSrcSpan (srcSpanStart (getLoc x)) (srcSpanStart (getLoc y)))
             then exprPlacement (unLoc y)
             else Normal
         opWrapper = case unLoc op of
           EWildPat NoExt -> backticks
           _ -> id
+    ub <- vlayout
+      (return useBraces)
+      (return $ case placement of Hanging -> useBraces; Normal -> dontUseBraces)
+    ub $ located x p_hsExpr
+
     placeHanging placement $ do
       located op (opWrapper . p_hsExpr)
       space
