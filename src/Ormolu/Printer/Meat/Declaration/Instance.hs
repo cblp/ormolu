@@ -84,8 +84,9 @@ p_clsInstDecl = \case
           inci $ do
             match_overlap_mode cid_overlap_mode breakpoint
             p_hsType x
-            breakpoint
-            unless (null allDecls) $ txt "where"
+            unless (null allDecls) $ do
+              breakpoint
+              txt "where"
         -- GHC's AST does not necessarily store each kind of element in source
         -- location order. This happens because different declarations are stored in
         -- different lists. Consequently, to get all the declarations in proper
