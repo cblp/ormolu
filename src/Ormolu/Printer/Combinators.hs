@@ -39,10 +39,13 @@ module Ormolu.Printer.Combinators
     -- ** Literals
   , comma
   , space
-    -- ** Utils
+    -- ** Layout
   , LayoutOptions (..)
   , defaultLayoutOptions
   , p_layout
+  , useBraces
+  , dontUseBraces
+
   , p_debug
   )
 where
@@ -282,32 +285,35 @@ space = txt " "
 
 data LayoutOptions
   = LayoutOptions
-      { loOmitBraces :: Bool
-      , loSit :: Bool
+      { loSit :: Bool
       }
 
 defaultLayoutOptions :: LayoutOptions
-defaultLayoutOptions = LayoutOptions False False
+defaultLayoutOptions = LayoutOptions False
 
 p_layout :: LayoutOptions -> [R ()] -> R ()
 p_layout LayoutOptions{..} rs = vlayout singleLine multiLine
- where
-  singleLine =
+  where
+  singleLine = do
+    ub <- canUseBraces
     case rs of
-      [] -> unless loOmitBraces $ txt "{}"
+      [] -> when ub $ txt "{}"
       xs -> do
-        unless loOmitBraces $ txt "{ "
+        when ub $ txt "{ "
         sep (txt "; ") id xs
-        unless loOmitBraces $ txt " }"
+        when ub $ txt " }"
   multiLine =
-    (if loSit then sitcc else id) $ sep newline id rs
+    (if loSit then sitcc else id) $ sep newline dontUseBraces rs
 
-
-p_debug :: R () -> R ()
-p_debug i = do
-  txt "BEGIN["
+p_debug :: Text -> R () -> R ()
+p_debug hdr i = do
+  txt "BEGIN"
+  txt "["
+  txt hdr
+  txt ","
   vlayout (txt "s") (txt "m")
   txt "]"
   i
-  txt "END"
-
+  txt "END["
+  txt hdr
+  txt "]"

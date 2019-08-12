@@ -81,12 +81,9 @@ p_matchGroup'
   -> MatchGroupStyle
   -> MatchGroup GhcPs (Located body)
   -> R ()
-p_matchGroup' placer pretty style MG {..} =
-  p_layout
-    defaultLayoutOptions
-      { loOmitBraces = case style of Case -> False; LambdaCase -> False; _ -> True
-      }
-    $ map (located' p_Match) (unLoc mg_alts)
+p_matchGroup' placer pretty style MG {..} = do
+  let ob = case style of Case -> id; LambdaCase -> id; _ -> dontUseBraces
+  ob $ p_layout defaultLayoutOptions $ map (located' p_Match) (unLoc mg_alts)
   where
     p_Match m@Match {..} =
       p_match'
@@ -183,7 +180,6 @@ p_match' placer pretty style isInfix strictness m_pats m_grhss = do
             stdCase
           LambdaCase -> stdCase
       return inci'
-
   let
     -- Calculate position of end of patterns. This is useful when we decide
     -- about putting certain constructions in hanging positions.
@@ -196,46 +192,46 @@ p_match' placer pretty style isInfix strictness m_pats m_grhss = do
       Case -> True
       LambdaCase -> True
       _ -> False
-  do
-    let GRHSs {..} = m_grhss
-        hasGuards = withGuards grhssGRHSs
-    unless (length grhssGRHSs > 1) $ do
-      case style of
-        Function _ | hasGuards -> return ()
-        Function _ -> txt " ="
-        PatternBind -> txt " ="
-        s | isCase s && hasGuards -> return ()
-        _ -> txt " ->"
-    let grhssSpan = combineSrcSpans' $
-          getGRHSSpan . unLoc <$> NE.fromList grhssGRHSs
-        patGrhssSpan = maybe grhssSpan
-          (combineSrcSpans grhssSpan . srcLocSpan) endOfPats
-        placement =
-          case endOfPats of
-            Nothing -> blockPlacement placer grhssGRHSs
-            Just spn ->
-              if isOneLineSpan
-                   (mkSrcSpan spn (srcSpanStart grhssSpan))
-                then blockPlacement placer grhssGRHSs
-                else Normal
-        p_body = do
-          let groupStyle =
-                if isCase style && hasGuards
-                then RightArrow
-                else EqualSign
-          sep newline (located' (p_grhs' pretty groupStyle)) grhssGRHSs
-        p_where = do
-          let whereIsEmpty = GHC.isEmptyLocalBindsPR (unLoc grhssLocalBinds)
-          unless (GHC.eqEmptyLocalBinds (unLoc grhssLocalBinds)) $ do
-            breakpoint
-            txt "where"
-            unless whereIsEmpty breakpoint
-            inci $ located grhssLocalBinds p_hsLocalBinds
 
-    inci' $ do
-      switchLayout [patGrhssSpan] $
-        placeHanging placement p_body
-      inci p_where
+  let GRHSs {..} = m_grhss
+      hasGuards = withGuards grhssGRHSs
+  unless (length grhssGRHSs > 1) $ do
+    case style of
+      Function _ | hasGuards -> return ()
+      Function _ -> txt " ="
+      PatternBind -> txt " ="
+      s | isCase s && hasGuards -> return ()
+      _ -> txt " ->"
+  let grhssSpan = combineSrcSpans' $
+        getGRHSSpan . unLoc <$> NE.fromList grhssGRHSs
+      patGrhssSpan = maybe grhssSpan
+        (combineSrcSpans grhssSpan . srcLocSpan) endOfPats
+      placement =
+        case endOfPats of
+          Nothing -> blockPlacement placer grhssGRHSs
+          Just spn ->
+            if isOneLineSpan
+                 (mkSrcSpan spn (srcSpanStart grhssSpan))
+              then blockPlacement placer grhssGRHSs
+              else Normal
+      p_body = do
+        let groupStyle =
+              if isCase style && hasGuards
+              then RightArrow
+              else EqualSign
+        sep newline (located' (p_grhs' pretty groupStyle)) grhssGRHSs
+      p_where = do
+        let whereIsEmpty = GHC.isEmptyLocalBindsPR (unLoc grhssLocalBinds)
+        unless (GHC.eqEmptyLocalBinds (unLoc grhssLocalBinds)) $ do
+          breakpoint
+          txt "where"
+          unless whereIsEmpty breakpoint
+          inci $ located grhssLocalBinds p_hsLocalBinds
+
+  inci' $ do
+    switchLayout [patGrhssSpan] $
+      placeHanging placement p_body
+    inci p_where
 
 p_grhs :: GroupStyle -> GRHS GhcPs (LHsExpr GhcPs) -> R ()
 p_grhs = p_grhs' p_hsExpr
@@ -387,7 +383,8 @@ p_stmt' pretty = \case
           inci (p_hsExpr x)
   RecStmt {..} -> do
     txt "rec "
-    sitcc $ sep newline (located' (p_stmt' pretty)) recS_stmts
+    p_layout defaultLayoutOptions { loSit = True } $
+      map (located' (p_stmt' pretty)) recS_stmts
   XStmtLR {} -> notImplemented "XStmtLR"
 
 gatherStmt :: ExprLStmt GhcPs -> [[ExprLStmt GhcPs]]
@@ -412,8 +409,8 @@ p_hsLocalBinds = \case
           (Left <$> bagToList bag) ++ (Right <$> lsigs)
         p_item (Left x) = located x p_valDecl
         p_item (Right x) = located x p_sigDecl
-    p_layout defaultLayoutOptions { loOmitBraces = True, loSit = True }
-      $ map p_item (sortOn ssStart items)
+    p_layout defaultLayoutOptions { loSit = True }
+      $ map (dontUseBraces . p_item) (sortOn ssStart items)
   HsValBinds NoExt _ -> notImplemented "HsValBinds"
   HsIPBinds NoExt _ -> notImplemented "HsIPBinds"
   EmptyLocalBinds NoExt -> return ()
@@ -470,7 +467,8 @@ p_hsExpr = \case
       txt "@"
       located (hswc_body a) p_hsType
   OpApp NoExt x op y -> do
-    located x p_hsExpr
+    ub <- vlayout (return useBraces) (return dontUseBraces)
+    ub $ located x p_hsExpr
     -- NOTE If the end of the first argument and the beginning of the second
     -- argument are on the same line, and the second argument has a hanging
     -- form, use hanging placement.
@@ -546,7 +544,9 @@ p_hsExpr = \case
     let doBody header = do
           txt header
           breakpoint
-          inci $ p_layout defaultLayoutOptions (map (located' p_stmt) (unLoc es))
+          ub <- vlayout (return useBraces) (return id)
+          inci $ p_layout defaultLayoutOptions
+            (map (located' (ub . p_stmt)) (unLoc es))
         compBody = brackets $ located es $ \xs -> do
           let p_parBody = sitcc . sep
                 (breakpoint >> txt "| ")
@@ -862,7 +862,7 @@ p_hsBracket = \case
       txt "|"
       breakpoint'
       inci $ do
-        body
+        dontUseBraces body
         breakpoint'
         txt "|]"
 

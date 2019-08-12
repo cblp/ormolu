@@ -1,6 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
 
-bar = do { foo; bar }
+bar = do foo; bar
 
 baz =
   mdo
@@ -63,11 +63,11 @@ g = unFoo
   ret
 
 main =
-  do { stuff }
+  do stuff
     `finally` do
       recover
 
-main = do { stuff `finally` recover }
+main = do stuff `finally` recover
 
 main = do { stuff } `finally` recover
 
@@ -82,9 +82,9 @@ samples n f = do
   let rands g = g1 : rands g2 where (g1, g2) = split g
   return $ rands gen
 
-main = do { bar }
+main = do bar
 
-main = do { bar; baz }
+main = do bar; baz
 
 main = do
   bar

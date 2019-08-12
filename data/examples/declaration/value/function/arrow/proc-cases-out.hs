@@ -1,6 +1,6 @@
 {-# LANGUAGE Arrows #-}
 
-foo f = proc a -> case a of { Left b -> f -< b }
+foo f = proc a -> case a of Left b -> f -< b
 
 bar f g h j =
   proc a -> case a of
