@@ -40,6 +40,8 @@ module Ormolu.Printer.Combinators
   , comma
   , space
     -- ** Utils
+  , LayoutOptions (..)
+  , defaultLayoutOptions
   , p_layout
   , p_debug
   )
@@ -278,18 +280,27 @@ space = txt " "
 ----------------------------------------------------------------------------
 -- Layout
 
-p_layout :: Bool -> [R ()] -> R ()
-p_layout canOmitBraces rs = vlayout singleLine multiLine
+data LayoutOptions
+  = LayoutOptions
+      { loOmitBraces :: Bool
+      , loSit :: Bool
+      }
+
+defaultLayoutOptions :: LayoutOptions
+defaultLayoutOptions = LayoutOptions False False
+
+p_layout :: LayoutOptions -> [R ()] -> R ()
+p_layout LayoutOptions{..} rs = vlayout singleLine multiLine
  where
   singleLine =
     case rs of
-      [] -> unless canOmitBraces $ txt "{}"
+      [] -> unless loOmitBraces $ txt "{}"
       xs -> do
-        unless canOmitBraces $ txt "{ "
+        unless loOmitBraces $ txt "{ "
         sep (txt "; ") id xs
-        unless canOmitBraces $ txt " }"
+        unless loOmitBraces $ txt " }"
   multiLine =
-    sitcc $ sep newline id rs
+    (if loSit then sitcc else id) $ sep newline id rs
 
 
 p_debug :: R () -> R ()

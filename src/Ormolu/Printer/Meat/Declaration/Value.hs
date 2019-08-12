@@ -82,7 +82,10 @@ p_matchGroup'
   -> MatchGroup GhcPs (Located body)
   -> R ()
 p_matchGroup' placer pretty style MG {..} =
-  p_layout (case style of Case -> False; LambdaCase -> False; _ -> True)
+  p_layout
+    defaultLayoutOptions
+      { loOmitBraces = case style of Case -> False; LambdaCase -> False; _ -> True
+      }
     $ map (located' p_Match) (unLoc mg_alts)
   where
     p_Match m@Match {..} =
@@ -412,7 +415,8 @@ p_hsLocalBinds = \case
           (Left <$> bagToList bag) ++ (Right <$> lsigs)
         p_item (Left x) = located x p_valDecl
         p_item (Right x) = located x p_sigDecl
-    p_layout True $ map p_item (sortOn ssStart items)
+    p_layout defaultLayoutOptions { loOmitBraces = True, loSit = True }
+      $ map p_item (sortOn ssStart items)
   HsValBinds NoExt _ -> notImplemented "HsValBinds"
   HsIPBinds NoExt _ -> notImplemented "HsIPBinds"
   EmptyLocalBinds NoExt -> return ()
@@ -545,7 +549,7 @@ p_hsExpr = \case
     let doBody header = do
           txt header
           breakpoint
-          inci $ p_layout False (map (located' p_stmt) (unLoc es))
+          inci $ p_layout defaultLayoutOptions (map (located' p_stmt) (unLoc es))
         compBody = brackets $ located es $ \xs -> do
           let p_parBody = sitcc . sep
                 (breakpoint >> txt "| ")

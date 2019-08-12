@@ -30,13 +30,13 @@ foo
             ( z,
               w
               ) -> \u -> -- Procs can have lambdas
-                     let v =
-                           u -- Actually never used
-                             ^ 2
-                     in ( returnA -<
-                            -- Just do the calculation
-                            (x + y * z)
-                          )
+              let v =
+                    u -- Actually never used
+                      ^ 2
+              in ( returnA -<
+                     -- Just do the calculation
+                     (x + y * z)
+                   )
       else
         do
           let u = x -- Let bindings bind expressions, not commands

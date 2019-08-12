@@ -35,7 +35,7 @@ import RdrName (rdrNameOcc)
 
 p_hsDecls :: FamilyStyle -> [LHsDecl GhcPs] -> R ()
 p_hsDecls style decls =
-  p_layout (case style of Free -> True; Associated -> True) (separated decls)
+  p_layout defaultLayoutOptions { loOmitBraces = True} (separated decls)
   where
     pDecl = p_hsDecl style
 
