@@ -16,4 +16,4 @@ baz x = q
 
 emptyWhere :: Int
 emptyWhere = 5
-  where 
+  where

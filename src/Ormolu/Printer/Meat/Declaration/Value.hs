@@ -196,7 +196,7 @@ p_match' placer pretty style isInfix strictness m_pats m_grhss = do
       Case -> True
       LambdaCase -> True
       _ -> False
-  inci' $ do
+  do
     let GRHSs {..} = m_grhss
         hasGuards = withGuards grhssGRHSs
     unless (length grhssGRHSs > 1) $ do
@@ -218,27 +218,24 @@ p_match' placer pretty style isInfix strictness m_pats m_grhss = do
                    (mkSrcSpan spn (srcSpanStart grhssSpan))
                 then blockPlacement placer grhssGRHSs
                 else Normal
-        inciLocalBinds = case placement of
-          Normal -> id
-          Hanging -> inci
         p_body = do
           let groupStyle =
                 if isCase style && hasGuards
                 then RightArrow
                 else EqualSign
           sep newline (located' (p_grhs' pretty groupStyle)) grhssGRHSs
-          let whereLocation = combineSrcSpans patGrhssSpan $ getLoc grhssLocalBinds
-              whereIsEmpty = GHC.isEmptyLocalBindsPR (unLoc grhssLocalBinds)
-          unless (GHC.eqEmptyLocalBinds (unLoc grhssLocalBinds))
-            . inciLocalBinds
-            . switchLayout [whereLocation] $ do
-                if whereIsEmpty then newline else breakpoint
-                txt "where"
-                breakpoint
-                inci $ located grhssLocalBinds p_hsLocalBinds
+        p_where = do
+          let whereIsEmpty = GHC.isEmptyLocalBindsPR (unLoc grhssLocalBinds)
+          unless (GHC.eqEmptyLocalBinds (unLoc grhssLocalBinds)) $ do
+            breakpoint
+            txt "where"
+            unless whereIsEmpty breakpoint
+            inci $ located grhssLocalBinds p_hsLocalBinds
 
-    switchLayout [patGrhssSpan] $
-      placeHanging placement p_body
+    inci' $ do
+      switchLayout [patGrhssSpan] $
+        placeHanging placement p_body
+      inci p_where
 
 p_grhs :: GroupStyle -> GRHS GhcPs (LHsExpr GhcPs) -> R ()
 p_grhs = p_grhs' p_hsExpr
