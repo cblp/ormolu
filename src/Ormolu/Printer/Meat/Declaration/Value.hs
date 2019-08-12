@@ -538,7 +538,7 @@ p_hsExpr = \case
     sitcc $ sep newline (located' (p_grhs RightArrow)) guards
   HsLet NoExt localBinds e -> do
     txt "let "
-    sitcc $ located localBinds p_hsLocalBinds
+    sitcc (located localBinds p_hsLocalBinds)
     vlayout space (newline >> space)
     txt "in "
     sitcc (located e p_hsExpr)
