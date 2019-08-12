@@ -68,6 +68,10 @@ p_clsInstDecl = \case
     txt "instance"
     case cid_poly_ty of
       HsIB {..} -> do
+        -- GHC's AST does not necessarily store each kind of element in source
+        -- location order. This happens because different declarations are stored in
+        -- different lists. Consequently, to get all the declarations in proper
+        -- order, they need to be manually sorted.
         let sigs = (getLoc &&& fmap (SigD NoExt)) <$> cid_sigs
             vals = (getLoc &&& fmap (ValD NoExt)) <$> toList cid_binds
             tyFamInsts =
@@ -87,10 +91,6 @@ p_clsInstDecl = \case
             unless (null allDecls) $ do
               breakpoint
               txt "where"
-        -- GHC's AST does not necessarily store each kind of element in source
-        -- location order. This happens because different declarations are stored in
-        -- different lists. Consequently, to get all the declarations in proper
-        -- order, they need to be manually sorted.
 
         unless (null allDecls) $ do
           inci $ do
