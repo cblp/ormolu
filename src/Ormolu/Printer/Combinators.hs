@@ -39,9 +39,13 @@ module Ormolu.Printer.Combinators
     -- ** Literals
   , comma
   , space
+    -- ** Utils
+  , p_layout
+  , p_debug
   )
 where
 
+import Control.Monad
 import Data.Data (Data)
 import Data.List (intersperse)
 import Data.Text (Text)
@@ -270,3 +274,29 @@ comma = txt ","
 
 space :: R ()
 space = txt " "
+
+----------------------------------------------------------------------------
+-- Layout
+
+p_layout :: Bool -> [R ()] -> R ()
+p_layout canOmitBraces rs = vlayout singleLine multiLine
+ where
+  singleLine =
+    case rs of
+      [] -> unless canOmitBraces $ txt "{}"
+      xs -> do
+        unless canOmitBraces $ txt "{ "
+        sep (txt "; ") id xs
+        unless canOmitBraces $ txt " }"
+  multiLine =
+    sitcc $ sep newline id rs
+
+
+p_debug :: R () -> R ()
+p_debug i = do
+  txt "BEGIN["
+  vlayout (txt "s") (txt "m")
+  txt "]"
+  i
+  txt "END"
+

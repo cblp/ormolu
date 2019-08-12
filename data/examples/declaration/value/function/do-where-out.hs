@@ -1,5 +1,5 @@
 f :: Maybe Int
 f = do
   return c
-  where
+  where 
     c = 0

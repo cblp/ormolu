@@ -1,3 +1,3 @@
-instance Typeable Int
+instance Typeable Int 
 
-instance Generic Int
+instance Generic Int 

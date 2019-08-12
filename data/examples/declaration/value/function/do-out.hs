@@ -1,8 +1,6 @@
 {-# LANGUAGE RecursiveDo #-}
 
-bar = do
-  foo
-  bar
+bar = do { foo; bar }
 
 baz =
   mdo
@@ -65,9 +63,13 @@ g = unFoo
   ret
 
 main =
-  do stuff
+  do { stuff }
     `finally` do
       recover
+
+main = do { stuff `finally` recover }
+
+main = do { stuff } `finally` recover
 
 foo =
   do
@@ -79,3 +81,19 @@ samples n f = do
   gen <- newQCGen
   let rands g = g1 : rands g2 where (g1, g2) = split g
   return $ rands gen
+
+main = do { bar }
+
+main = do { bar; baz }
+
+main = do
+  bar
+  baz
+
+main = do
+  a <- bar
+  let a = b; c = d
+  baz d
+  let e = f
+      g = h
+  return c

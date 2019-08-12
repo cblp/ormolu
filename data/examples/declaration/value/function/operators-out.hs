@@ -24,7 +24,7 @@ foo =
     + 2
 
 main =
-  do stuff
+  do { stuff }
     `finally` do
       recover
 

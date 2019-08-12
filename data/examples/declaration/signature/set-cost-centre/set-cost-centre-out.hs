@@ -1,5 +1,5 @@
 f x y = g (x + y)
-  where
+  where 
     g z = z
     {-# SCC g #-}
 {-# SCC f #-}

@@ -82,7 +82,8 @@ p_matchGroup'
   -> MatchGroup GhcPs (Located body)
   -> R ()
 p_matchGroup' placer pretty style MG {..} =
-  sep newline (located' p_Match) (unLoc mg_alts)
+  p_layout (case style of Case -> False; LambdaCase -> False; _ -> True)
+    $ map (located' p_Match) (unLoc mg_alts)
   where
     p_Match m@Match {..} =
       p_match'
@@ -229,10 +230,10 @@ p_match' placer pretty style isInfix strictness m_pats m_grhss = do
             . inciLocalBinds
             . switchLayout [whereLocation] $ do
                 if whereIsEmpty then newline else breakpoint
-                txt "where"
-                unless whereIsEmpty $ do
-                  breakpoint
-                  inci (located grhssLocalBinds p_hsLocalBinds)
+                txt "where "
+                breakpoint'
+                inci $ located grhssLocalBinds p_hsLocalBinds
+
     switchLayout [patGrhssSpan] $
       placeHanging placement p_body
 
@@ -411,7 +412,7 @@ p_hsLocalBinds = \case
           (Left <$> bagToList bag) ++ (Right <$> lsigs)
         p_item (Left x) = located x p_valDecl
         p_item (Right x) = located x p_sigDecl
-    sitcc $ sep newline (sitcc . p_item) (sortOn ssStart items)
+    p_layout True $ map p_item (sortOn ssStart items)
   HsValBinds NoExt _ -> notImplemented "HsValBinds"
   HsIPBinds NoExt _ -> notImplemented "HsIPBinds"
   EmptyLocalBinds NoExt -> return ()
@@ -536,17 +537,15 @@ p_hsExpr = \case
     sitcc $ sep newline (located' (p_grhs RightArrow)) guards
   HsLet NoExt localBinds e -> do
     txt "let "
-    sitcc (located localBinds p_hsLocalBinds)
+    sitcc $ located localBinds p_hsLocalBinds
     vlayout space (newline >> space)
     txt "in "
     sitcc (located e p_hsExpr)
   HsDo NoExt ctx es -> do
     let doBody header = do
           txt header
-          if length (unLoc es) <= 1
-          then breakpoint
-          else newline
-          inci $ located es (sep newline (located' (sitcc . p_stmt)))
+          breakpoint
+          inci $ p_layout False (map (located' p_stmt) (unLoc es))
         compBody = brackets $ located es $ \xs -> do
           let p_parBody = sitcc . sep
                 (breakpoint >> txt "| ")

@@ -16,7 +16,7 @@ foo bar
 do
   pure []
 
-$(do [d|baz = baz|])
+$(do { [d|baz = baz|] })
 
 [d|data T a where Foo :: T ()|]
 

@@ -1,23 +1,23 @@
 {-# LANGUAGE UnboxedSums #-}
 
 v = True
-  where
+  where 
     (# _x #) = (# True #)
 
 p = True
-  where
+  where 
     (# _x | #) = (# | True #)
 
 q = True
-  where
+  where 
     (# | _x | #) = (# | True | #)
 
 z = True
-  where
+  where 
     (# | | _x #) = (# | | True #)
 
 z_multiline = True
-  where
+  where 
     (# | | _x
       #) =
         (# | | True
