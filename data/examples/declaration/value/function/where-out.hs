@@ -3,13 +3,13 @@ foo x = f x where f z = z
 
 bar :: Int -> Int
 bar x = f x
-  where 
+  where
     f :: Int -> Int
     f z = z
 
 baz :: Int -> Int
 baz x = q
-  where 
+  where
     y = x
     z = y
     q = z

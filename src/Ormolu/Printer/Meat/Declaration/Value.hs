@@ -233,8 +233,8 @@ p_match' placer pretty style isInfix strictness m_pats m_grhss = do
             . inciLocalBinds
             . switchLayout [whereLocation] $ do
                 if whereIsEmpty then newline else breakpoint
-                txt "where "
-                breakpoint'
+                txt "where"
+                breakpoint
                 inci $ located grhssLocalBinds p_hsLocalBinds
 
     switchLayout [patGrhssSpan] $

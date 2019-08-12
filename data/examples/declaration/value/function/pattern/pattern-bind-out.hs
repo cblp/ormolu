@@ -1,6 +1,6 @@
 foo :: Int
 foo = bar
-  where 
+  where
     Foo bar baz = quux
     Baz
       quux = zoo
