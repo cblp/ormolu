@@ -45,8 +45,6 @@ module Ormolu.Printer.Combinators
   , p_layout
   , useBraces
   , dontUseBraces
-
-  , p_debug
   )
 where
 
@@ -304,16 +302,3 @@ p_layout LayoutOptions{..} rs = vlayout singleLine multiLine
         when ub $ txt " }"
   multiLine =
     (if loSit then sitcc else id) $ sep newline dontUseBraces rs
-
-p_debug :: Text -> R () -> R ()
-p_debug hdr i = do
-  txt "BEGIN"
-  txt "["
-  txt hdr
-  txt ","
-  vlayout (txt "s") (txt "m")
-  txt "]"
-  i
-  txt "END["
-  txt hdr
-  txt "]"
