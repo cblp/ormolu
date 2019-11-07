@@ -49,10 +49,12 @@ instance Exception OrmoluException where
       unlines $
         [ "AST of input and AST of formatted code differ."
         ]
-          ++ ( fmap withIndent $ case fmap (\s -> "at " ++ showOutputable s) ss of
-                 [] -> ["in " ++ path]
-                 xs -> xs
-             )
+          ++ fmap
+            withIndent
+            ( case fmap (\s -> "at " ++ showOutputable s) ss of
+                [] -> ["in " ++ path]
+                xs -> xs
+            )
           ++ ["Please, consider reporting the bug."]
     OrmoluNonIdempotentOutput loc left right ->
       showParsingErr
@@ -84,7 +86,7 @@ withPrettyOrmoluExceptions m = m `catch` h
           OrmoluParsingFailed _ _ -> 3
           OrmoluOutputParsingFailed _ _ -> 4
           OrmoluASTDiffers _ _ -> 5
-          OrmoluNonIdempotentOutput _ _ _ -> 6
+          OrmoluNonIdempotentOutput {} -> 6
           OrmoluUnrecognizedOpts _ -> 7
 
 ----------------------------------------------------------------------------

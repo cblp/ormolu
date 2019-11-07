@@ -36,9 +36,7 @@ p_hsmodImport ImportDecl {..} = do
   space
   when ideclQualified (txt "qualified")
   space
-  case ideclPkgQual of
-    Nothing -> return ()
-    Just slit -> atom slit
+  forM_ ideclPkgQual atom
   space
   inci $ do
     located ideclName atom
@@ -56,7 +54,7 @@ p_hsmodImport ImportDecl {..} = do
         when hiding (txt "hiding")
     case ideclHiding of
       Nothing -> return ()
-      Just (_, (L _ xs)) -> do
+      Just (_, L _ xs) -> do
         breakpoint
         parens N . sitcc $ do
           layout <- getLayout
