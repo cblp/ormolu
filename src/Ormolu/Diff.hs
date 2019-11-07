@@ -57,7 +57,7 @@ matchIgnoringSrcSpans = genericQuery
   where
     genericQuery :: GenericQ (GenericQ Diff)
     genericQuery x y
-      -- NOTE 'ByteString' implement 'Data' instance manually and does not
+      -- NOTE 'ByteString' implements 'Data' instance manually and does not
       -- implement 'toConstr', so we have to deal with it in a special way.
       | Just x' <- cast x,
         Just y' <- cast y =
@@ -78,7 +78,7 @@ matchIgnoringSrcSpans = genericQuery
             x
             y
       | otherwise = Different []
-    srcSpanEq :: SrcSpan -> GenericQ Diff
+    srcSpanEq :: SrcSpan -> a -> Diff -- aka GenericQ Diff
     srcSpanEq _ _ = Same
     hsModuleEq :: HsModule GhcPs -> GenericQ Diff
     hsModuleEq hs0 hs1' =
@@ -88,7 +88,7 @@ matchIgnoringSrcSpans = genericQuery
           matchIgnoringSrcSpans
             hs0 {hsmodImports = sortImports (hsmodImports hs0)}
             hs1 {hsmodImports = sortImports (hsmodImports hs1)}
-    sourceTextEq :: SourceText -> GenericQ Diff
+    sourceTextEq :: SourceText -> a -> Diff -- aka GenericQ Diff
     sourceTextEq _ _ = Same
     hsDocStringEq :: HsDocString -> GenericQ Diff
     hsDocStringEq str0 str1' =

@@ -144,7 +144,11 @@ buildFixityMap getOpName opTree =
     avgScores :: [(RdrName, Double)] -> [(RdrName, Double)]
     avgScores =
       sortOn snd
-        . map (\xs@((n, _) : _) -> (n, avg $ map snd xs))
+        . map
+          ( \case
+              [] -> error "empty"
+              xs@((n, _) : _) -> (n, avg $ map snd xs)
+          )
         . groupBy ((==) `on` fst)
         . sort
     avg :: [Double] -> Double
